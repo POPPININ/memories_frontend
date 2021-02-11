@@ -79,4 +79,3 @@ Post.propTypes = {
   }),
   setCurrentID: PropTypes.func.isRequired,
 };
-
