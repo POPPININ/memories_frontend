@@ -1,12 +1,12 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import useStyles from './styles.js';
+import PropTypes from 'prop-types';
 import {Typography, TextField, Paper, Button} from '@material-ui/core';
 import FileBase from 'react-file-base64';
-import {useDispatch} from 'react-redux';
-import {createPost} from '../../actions/posts.js';
+import {useDispatch, useSelector} from 'react-redux';
+import {createPost, updatePost} from '../../actions/posts.js';
 
-const Form = () => {
-  // styles for form
+const Form = ({currentID, setCurrentID}) => {
   const classes = useStyles();
 
   const [postData, setPostData] = useState({
@@ -17,7 +17,17 @@ const Form = () => {
     selectedFile: '',
   });
 
+  // return existing posts
+  const post = useSelector((state) => currentID ?
+    state.posts.find((post) => post._id === currentID) : null);
+
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (post) {
+      setPostData(post);
+    }
+  }, [post]);
 
   /**
    * Dispatch user submit.
@@ -25,17 +35,36 @@ const Form = () => {
    */
   function handleSubmit(e) {
     e.preventDefault();
-    dispatch(createPost(postData));
+
+    if (currentID) {
+      dispatch(updatePost(currentID, postData));
+    } else {
+      dispatch(createPost(postData));
+    }
+
+    clear();
   }
 
-  // Clear all fields in the form
-  // function clear() { }
+  /**
+   * Clear all field in the form.
+   */
+  function clear() {
+    setCurrentID(null);
+    setPostData({
+      creator: '',
+      title: '',
+      message: '',
+      tags: '',
+      selectedFile: '',
+    });
+  }
 
   return (
     <Paper className={classes.paper}>
       <form autoComplete="off" noValidate
         className={`${classes.root} ${classes.form}`} onSubmit={handleSubmit}>
-        <Typography variant="h6">Creating a Memory</Typography>
+        <Typography variant="h6">{currentID ? 'Editing': 'Creating' } a Memory
+        </Typography>
 
         <TextField name="creator" variant="outlined" label="Creator"
           fullWidth value={postData.creator}
@@ -73,7 +102,7 @@ const Form = () => {
         </Button>
 
         <Button variant="contained" color="secondary" size="small" fullWidth
-          onClick={clear}>
+          onClick={() => clear()}>
                     Clear
         </Button>
 
@@ -83,3 +112,9 @@ const Form = () => {
 };
 
 export default Form;
+
+Form.propTypes = {
+  currentID: PropTypes.number,
+  setCurrentID: PropTypes.func,
+};
+
